@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101a35">
+<title>TextbookHub — Search books</title>
+<style>
+:root{--ink:#17213b;--muted:#68748c;--blue:#4169e1;--line:#e4e9f2;--bg:#f4f6fb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:linear-gradient(125deg,#101a35,#294987);color:#fff;padding:22px 18px 30px}.wrap{max-width:1050px;margin:auto}.brand{font-size:20px;font-weight:850;margin-bottom:28px}.brand span{color:#9dbaff}
+h1{font-size:clamp(30px,5vw,44px);line-height:1.08;letter-spacing:-1.3px;margin:0 0 9px}.sub{color:#d7e1f8;margin:0 0 20px}
+ .search-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+form.search{display:flex;gap:7px;background:#fff;padding:7px;border-radius:13px;max-width:650px;flex:1}
+.search input{flex:1;min-width:0;border:0;outline:0;padding:11px;font-size:16px;color:var(--ink)}
+.level-label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#d7e1f8;font-weight:700}
+.level-label select{min-width:190px;border:1px solid #ffffff55;background:#fff;color:#17213b;border-radius:9px;padding:10px;font-size:13px}
+button{cursor:pointer;border:0;border-radius:9px;background:var(--blue);color:#fff;font-weight:750;padding:11px 16px}
+button:disabled{opacity:.55;cursor:not-allowed}
+button:not(:disabled):hover{filter:brightness(.96)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #8aa9ff;outline-offset:2px}
+.book{transition:border-color .16s ease,box-shadow .16s ease}
+.book:hover{border-color:#cbd8ff;box-shadow:0 5px 18px #1524490d}
+.search:focus-within{box-shadow:0 0 0 3px #8aa9ff55}
+main{max-width:1050px;margin:26px auto;padding:0 18px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h2{font-size:19px;margin:0}.muted{font-size:13px;color:var(--muted)}
+.chips{display:flex;gap:8px;overflow:auto;padding:13px 0 18px}.chip{white-space:nowrap;border:1px solid var(--line);background:#fff;color:#3e4b66;border-radius:99px;padding:8px 13px;font-size:13px}
+.chip.active{background:#eaf0ff;border-color:#cbd8ff;color:#2448b7}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:13px;margin-top:14px}
+.book{display:flex;gap:12px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px;min-height:170px}
+.cover{width:76px;height:112px;flex:0 0 76px;object-fit:cover;border-radius:4px;background:#edf0f6;box-shadow:0 2px 7px #15244918}
+.no-cover{display:grid;place-items:center;color:#9aa5bb;font-size:26px}
+.details{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.title{font-weight:800;font-size:14px;line-height:1.3;margin-bottom:5px}
+.author{font-size:12px;color:var(--muted);margin-bottom:7px}
+.badge{font-size:10px;font-weight:800;border-radius:99px;padding:4px 7px;background:#edf1f7;color:#56637b;margin-bottom:7px}
+.badge.free{background:#e4f7ec;color:#167344}.badge.full{background:#eaf0ff;color:#2d50b8}
+.meta{font-size:11px;color:#8791a5;margin-top:auto}.actions{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
+.actions a{font-size:12px;color:#3155c4;font-weight:750;text-decoration:none}
+.state{grid-column:1/-1;background:#fff;border:1px dashed #d7deea;border-radius:13px;padding:25px;text-align:center;color:var(--muted)}
+.sources{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:11px;margin:22px 0}
+.source{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+.source strong{display:block;margin-bottom:5px}.source p{font-size:12px;color:var(--muted);margin:0 0 10px}.source a{font-size:12px;color:#3155c4;font-weight:750;text-decoration:none}
+.note{font-size:12px;color:#68748c;border-top:1px solid var(--line);padding:18px 0;margin-top:24px}
+@media(max-width:600px){.search-tools{display:block}.search{max-width:none;margin-bottom:9px}.level-label select{width:100%}.level-label{font-size:12px}}@media(max-width:480px){.search button{padding:10px}.book{min-height:150px}.cover{width:66px;flex-basis:66px;height:100px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+#reader{position:fixed;inset:0;z-index:50;background:#101a35;display:flex;flex-direction:column}#reader[hidden]{display:none}
+.rbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;color:#fff}.rbar strong{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rframe{flex:1;width:100%;border:0;background:#fff}
+.rtools{display:flex;gap:8px;flex:0 0 auto}.rbar strong{flex:1}
+#rtext{flex:1;overflow:auto;background:#fff;color:#17213b}#rbody{max-width:760px;margin:0 auto;padding:24px 18px 60px;white-space:pre-wrap;font:17px/1.7 Georgia,serif}
+.rnote{font-size:12px;color:#d7e1f8;padding:0 14px 8px}.readbtn{font-size:12px;padding:6px 11px;border-radius:8px}
+.gwrap{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:14px;box-shadow:0 5px 22px #1524490a}
+.grow{display:flex;gap:10px;align-items:center;margin-bottom:9px}
+.grow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:16px;color:var(--ink)}
+.gdot{width:26px;height:26px;border-radius:50%;padding:0;flex:0 0 26px;border:3px solid #fff;box-shadow:0 0 0 1px #cfd6e4}.gdot.off{opacity:.3}
+.grm{background:#edf1f7;color:#56637b;padding:8px 11px}
+.gerr{color:#c0392b;font-size:12px;margin:-2px 0 6px 34px;min-height:0}
+.gbtns{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.gbtn{padding:8px 12px;font-size:13px}.gbtn.alt{background:#eaf0ff;color:#2448b7}
+.gkeys{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}.gkeys button{background:#edf1f7;color:#17213b;padding:7px 10px;font-size:14px;font-weight:650}
+#gcv{width:100%;height:520px;display:block;touch-action:none;border:1px solid var(--line);border-radius:10px;cursor:crosshair;background:#fff}
+.gread{font-size:14px;font-weight:700;margin:10px 0 2px;min-height:21px;overflow-wrap:anywhere}.geval{font-size:13px;margin-top:2px;overflow-wrap:anywhere}
+.glist{display:flex;flex-direction:column;gap:5px;margin-top:8px}.glist button{text-align:left;background:#f4f6fb;color:#17213b;font-weight:600;font-size:13px;padding:8px 11px}
+@media(max-width:700px){#gcv{height:420px}.gwrap{padding:12px}}@media(max-width:430px){#gcv{height:360px}.gkeys button{padding:8px 9px}}
+</style></head>
+<body>
+<header><div class="wrap">
+<div class="brand">Textbook<span>Hub</span></div>
+<h1>Find the book.<br>Find your way.</h1>
+<p class="sub">Search one place. Discover books from across the catalogue. <a href="#graph" style="color:#9dbaff;font-weight:700;white-space:nowrap">Graphing calculator ↓</a></p>
+<div class="search-tools">
+<form class="search" id="searchForm"><input id="query" type="search" placeholder="Title, author, ISBN or subject…" required><button id="go">Search</button></form>
+<label class="level-label">Education level
+<select id="level" aria-label="Education level">
+<option value="any">Any level</option>
+<option value="primary">Primary school</option>
+<option value="secondary">Secondary school</option>
+<option value="gcse">GCSE / equivalent</option>
+<option value="alevel">A-level / sixth form</option>
+<option value="undergraduate">University — undergraduate</option>
+<option value="postgraduate">University — postgraduate</option>
+<option value="professional">Professional / vocational</option>
+</select></label>
+</div>
+<p class="muted" style="color:#d7e1f8;margin:9px 0 0">Choose a level to make searches more relevant. Results appear below. <strong id="levelNote"></strong></p>
+</div></header>
+<main>
+<div class="row"><div><h2 id="heading">Explore books</h2><div class="muted" id="count">Choose a category or search for a title.</div></div>
+<div class="row"><label class="muted"><input type="checkbox" id="free"> Show full-view / public-domain results first</label>
+<select id="sort" aria-label="Sort"><option value="relevance">Relevance</option><option value="newest">Newest</option></select></div></div>
+<div class="chips" id="categories">
+<button class="chip active" data-q="popular books">Popular</button>
+<button class="chip" data-q="subject:mathematics">Mathematics</button>
+<button class="chip" data-q="subject:science">Science</button>
+<button class="chip" data-q="subject:engineering">Engineering</button>
+<button class="chip" data-q="subject:computers">Computing</button>
+<button class="chip" data-q="subject:history">History</button>
+<button class="chip" data-q="subject:literature">Literature</button>
+<button class="chip" data-q="subject:business">Business</button>
+</div>
+<section class="grid" id="results"><div class="state">Search for a book to see results here.</div></section>
+<div class="note" style="border:0;background:#fff;padding:13px 15px;border-radius:11px;margin-top:18px"><strong>How level matching works:</strong> TextbookHub adds your selected education level to the catalogue search. This improves relevance, but publishers do not use one universal level standard, so check the book description and syllabus before relying on a match.</div>
+<h2 id="graph" style="margin-top:28px">Graphing calculator</h2>
+<p class="muted">Plot up to six functions on the same grid. Use the y= and f(x)= keypad buttons, then drag to move, pinch or scroll to zoom, or tap the graph to read coordinates.</p>
+<div class="gwrap">
+<div id="gRows"></div>
+<div class="gkeys" id="gKeys"></div>
+<div class="gbtns"><button type="button" class="gbtn alt" id="gAdd">+ Add function</button><button type="button" class="gbtn alt" id="gZin">Zoom +</button><button type="button" class="gbtn alt" id="gZout">Zoom −</button><button type="button" class="gbtn alt" id="gReset">Reset view</button><button type="button" class="gbtn alt" id="gDeg">Radians</button></div>
+<canvas id="gcv" aria-label="Graph"></canvas>
+<div class="gread" id="gRead">Tap the graph to see coordinates.</div>
+<div class="muted" id="gHover">Move your pointer near a curve or notable point; tap the graph on a touchscreen to read coordinates.</div>
+<div class="gbtns" style="align-items:center"><label class="muted">Find y at x = <input id="gX" type="number" step="any" inputmode="decimal" style="width:100px;border:1px solid var(--line);border-radius:8px;padding:8px"></label><button type="button" class="gbtn" id="gEvalBtn">Find y</button></div>
+<div class="geval" id="gEval"></div>
+</div>
+<h2 style="margin-top:28px">My library</h2>
+<p class="muted">Add books you've downloaded (.txt or .pdf) and read them here. They're saved on this device only. Only add books you're allowed to keep, such as public-domain or openly licensed ones, or copies you own.</p>
+<p><button id="addBook" type="button">+ Add a book from your phone</button><input id="bookFile" type="file" accept=".txt,.pdf,text/plain,application/pdf" hidden></p>
+<section class="grid" id="library"><div class="state">Loading…</div></section>
+<h2 style="margin-top:28px">Open textbook collections</h2>
+<p class="muted">Specialist free collections. Availability and licence depend on the individual title.</p>
+<section class="sources">
+<div class="source"><strong>OpenStax</strong><p>Free, openly licensed school and university textbooks.</p><a href="https://openstax.org/subjects" target="_blank" rel="noopener">Browse textbooks ↗</a></div>
+<div class="source"><strong>Open Textbook Library</strong><p>Peer-reviewed open textbooks for higher education.</p><a href="https://open.umn.edu/opentextbooks" target="_blank" rel="noopener">Browse collection ↗</a></div>
+<div class="source"><strong>Project Gutenberg</strong><p>Public-domain ebooks, especially classic literature.</p><a href="https://www.gutenberg.org/ebooks/search/" target="_blank" rel="noopener">Search collection ↗</a></div>
+<div class="source"><strong>DOAB</strong><p>Academic books openly available from publishers.</p><a href="https://www.doabooks.org/" target="_blank" rel="noopener">Browse open books ↗</a></div>
+<div class="source"><strong>Internet Archive</strong><p>Digital books that may be readable, borrowable or restricted.</p><a href="https://archive.org/details/texts" target="_blank" rel="noopener">Browse texts ↗</a></div>
+</section>
+<div class="note">TextbookHub does not host book files. The “Read here” button appears only for books recorded as public domain or openly available; everything else opens at its original source. “Full view” means Google Books reports a complete view; it does not automatically mean an open licence or downloadable file. Always check the source's terms.</div>
+</main>
+<div id="reader" hidden><div class="rbar"><strong id="rtitle"></strong><span class="rtools"><button id="rminus" type="button" hidden>A−</button><button id="rplus" type="button" hidden>A+</button><button id="rclose" type="button">Close ✕</button></span></div><div class="rnote" id="rnote">Shown because this edition is recorded as public domain or openly available. Copyright rules differ between countries, so check your local law. <span id="rcontact"></span></div><div class="rnote" id="rcredit" hidden></div><iframe id="rframe" title="Book reader" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups"></iframe><div id="rtext" hidden><div id="rbody"></div></div></div>
+<script>
+const $=s=>document.querySelector(s);let items=[],shown=[],lastTerm='',source='Google Books';
+const CONTACT_EMAIL=''; // optional: your email, shown in the reader for takedown/problem reports
+const GB_KEY=''; // optional: paste a free Google Books API key between the quotes
+function safe(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function bookStatus(b){let a=b.accessInfo||{},provider=b._source||'Google Books';if(a.publicDomain)return ['Public domain · full view','free'];if(a.viewability==='ALL_PAGES')return ['Full view on '+provider,'full'];if(a.viewability==='PARTIAL')return ['Preview only',''];return ['Details only',''];}
+let lib=[],fs=17;
+function setMode(kind,b){$('#rframe').hidden=(kind==='text');$('#rtext').hidden=(kind!=='text');$('#rminus').hidden=$('#rplus').hidden=(kind!=='text');$('#rnote').hidden=!!b;$('#rcredit').hidden=!b;
+ if(b)$('#rcredit').innerHTML=b.local?safe(b.title)+' · added from your device':safe(b.title)+' by '+safe(b.author)+' · '+safe(b.license)+' · Source: <a style="color:#9dbaff" target="_blank" rel="noopener" href="'+safe(b.sourceUrl||'#')+'">'+safe(b.source)+'</a>';}
+function idb(){return new Promise((res,rej)=>{let r=indexedDB.open('textbookhub',1);r.onupgradeneeded=()=>r.result.createObjectStore('books',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function dbAll(){let d=await idb();return new Promise((res,rej)=>{let q=d.transaction('books').objectStore('books').getAll();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
+async function dbPut(o){let d=await idb();return new Promise((res,rej)=>{let t=d.transaction('books','readwrite');t.objectStore('books').add(o);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
+async function dbDel(id){let d=await idb();return new Promise((res,rej)=>{let t=d.transaction('books','readwrite');t.objectStore('books').delete(id);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
+async function loadLibrary(){lib=[];
+ try{let r=await fetch('library/library.json');if(r.ok)lib=await r.json();}catch(e){}
+ try{(await dbAll()).forEach(x=>lib.push({...x,local:true,license:'Your copy',source:'Added from your device'}));}catch(e){}
+ $('#library').innerHTML=lib.length?lib.map((b,i)=>`<article class="book"><div class="cover no-cover">▤</div><div class="details"><div class="title">${safe(b.title)}</div><div class="author">${safe(b.author)}</div><span class="badge free">${safe(b.license)}</span><div class="meta">${safe(b.source)}</div><div class="actions"><button class="readbtn" data-l="${i}">${b.type==='pdf'&&b.local?'Open PDF':'Read here'}</button>${b.local?`<button class="readbtn" data-del="${b.id}" style="background:#8791a5">Remove</button>`:''}</div></div></article>`).join(''):'<div class="state">Your library is empty. Tap “Add a book from your phone” and pick a downloaded .txt or .pdf file.</div>';}
+function canRead(b){let a=b.accessInfo||{};if(b._source==='Open Library')return a.access==='public'&&(a.iaIds||[]).length>0;return !!b.id&&a.publicDomain===true&&a.viewability==='ALL_PAGES';}
+async function openIA(ids){for(let id of ids){try{let r=await fetch('https://archive.org/metadata/'+encodeURIComponent(id));if(!r.ok)continue;let m=await r.json(),md=m.metadata||{};if(m.is_dark)continue;let col=[].concat(md.collection||[]).join(' ').toLowerCase();if(String(md['access-restricted-item'])==='true'||/inlibrary|printdisabled|lendinglibrary|browserlending/.test(col))continue;return id;}catch(e){}}return null;}
+async function embedUrl(b){if(b._source==='Open Library'){let ids=b.accessInfo?.iaIds||[],id=await openIA(ids);return id?'https://archive.org/embed/'+encodeURIComponent(id):null;}if(!b.id||b.accessInfo?.publicDomain!==true||b.accessInfo?.viewability!=='ALL_PAGES')return null;return 'https://books.google.com/books?id='+encodeURIComponent(b.id)+'&printsec=frontcover&output=embed';}
+function render(){
+ let list=[...items];if($('#free').checked)list.sort((a,b)=>Number(!!b.accessInfo?.publicDomain||b.accessInfo?.viewability==='ALL_PAGES')-Number(!!a.accessInfo?.publicDomain||a.accessInfo?.viewability==='ALL_PAGES'));
+ $('#count').textContent=`${list.length} books found · ${source}`;shown=list;
+ if(!list.length){$('#results').innerHTML='<div class="state">No books found. Try a shorter title or another subject.</div>';return;}
+ $('#results').innerHTML=list.map((b,i)=>{let v=b.volumeInfo||{},[label,cls]=bookStatus(b),img=v.imageLinks?.thumbnail?.replace('http:','https:'),url=b.accessInfo?.webReaderLink||v.infoLink||'https://books.google.com/';
+ return `<article class="book">${img?`<img class="cover" src="${safe(img)}" alt="">`:'<div class="cover no-cover">▤</div>'}<div class="details"><div class="title">${safe(v.title||'Untitled')}</div><div class="author">${safe((v.authors||['Author unknown']).join(', '))}</div><span class="badge ${cls}">${label}</span><div class="meta">${safe(v.publisher||'Publisher unavailable')}${v.publishedDate?' · '+safe(v.publishedDate.slice(0,4)):''}</div><div class="actions">${canRead(b)?`<button class="readbtn" data-i="${i}">Read here</button>`:''}<a href="${safe(url)}" target="_blank" rel="noopener">View book ↗</a>${v.previewLink?`<a href="${safe(v.previewLink)}" target="_blank" rel="noopener">Preview ↗</a>`:''}</div></div></article>`}).join('');
+}
+const levelTerms={
+ primary:['primary school','elementary school'],
+ secondary:['secondary school','high school'],
+ gcse:['GCSE','GCSE textbook','GCSE student book'],
+ alevel:['A-level','A level','AS and A-level'],
+ undergraduate:['undergraduate textbook','university textbook'],
+ postgraduate:['postgraduate textbook','graduate textbook'],
+ professional:['professional textbook','vocational textbook']
+};
+function searchVariants(term,level){
+ const base=String(term||'').trim();if(!base)return [];
+ const variants=[base];
+ const add=x=>{if(x&&!variants.some(v=>v.toLowerCase()===x.toLowerCase()))variants.push(x)};
+ const terms=levelTerms[level]||[];
+ for(const t of terms)add(base+' '+t);
+ // UK school books are often catalogued under either "maths" or "mathematics".
+ if(/\bmaths?\b/i.test(base)){
+  const alt=base.replace(/\bmaths?\b/ig,m=>m.toLowerCase()==='maths'?'mathematics':'maths');
+  add(alt);for(const t of terms)add(alt+' '+t);
+ }
+ return variants.slice(0,7);
+}
+const levelNames={any:'Any level',primary:'Primary school',secondary:'Secondary school',gcse:'GCSE / equivalent',alevel:'A-level / sixth form',undergraduate:'University — undergraduate',postgraduate:'University — postgraduate',professional:'Professional / vocational'};
+function updateLevelNote(){let v=$('#level').value;$('#levelNote').textContent='Education level: '+levelNames[v];}
+async function openLibrary(q,order){
+ let r=await fetch('https://openlibrary.org/search.json?q='+encodeURIComponent(q)+'&limit=40'+(order==='newest'?'&sort=new':'')+'&fields=key,title,author_name,first_publish_year,publisher,cover_i,ia,public_scan_b,has_fulltext,ebook_access');
+ if(!r.ok)throw Error(r.status);let d=await r.json();
+ return (d.docs||[]).map(x=>({volumeInfo:{title:x.title,authors:x.author_name,publisher:(x.publisher||[])[0],publishedDate:x.first_publish_year?String(x.first_publish_year):'',imageLinks:x.cover_i?{thumbnail:'https://covers.openlibrary.org/b/id/'+x.cover_i+'-M.jpg'}:undefined,infoLink:'https://openlibrary.org'+x.key},
+  accessInfo:{viewability:x.public_scan_b?'ALL_PAGES':(x.has_fulltext?'PARTIAL':'NONE'),webReaderLink:(x.ia&&x.ia[0])?'https://archive.org/details/'+x.ia[0]:undefined,iaIds:(x.ia||[]).slice(0,5),access:x.ebook_access||''}}));
+}
+function rankSchoolBook(b,level){
+ const v=b.volumeInfo||{},text=((v.title||'')+' '+(v.subtitle||'')+' '+(v.description||'')+' '+(v.publisher||'')).toLowerCase();
+ let score=0;
+ if(level==='gcse'){if(/\bgcse\b/.test(text))score+=14;if(/\bigcse\b/.test(text))score+=5;}
+ if(level==='alevel'){if(/a[ -]?level|\bas level\b|\bgce\b/.test(text))score+=14;if(/further mathematics|further maths/.test(text))score+=2;}
+ if(/student book|textbook|coursebook|course book/.test(text))score+=4;
+ if(/revision guide|workbook|practice book/.test(text))score+=1;
+ return score;
+}
+let searchSequence=0;
+async function search(term){
+ let q=String(term||'').trim();if(!q)return;lastTerm=q;const requestId=++searchSequence,level=$('#level').value;updateLevelNote();
+ const queries=searchVariants(q,level);$('#heading').textContent='Search results';$('#go').disabled=true;$('#go').textContent='Searching';$('#results').innerHTML='<div class="state">Searching the book catalogues…</div>';
+ try{
+  const order=$('#sort').value==='newest'?'newest':'relevance';let collected=[],provider='Google Books',googleOk=false;
+  const responses=await Promise.allSettled(queries.map(async query=>{
+   const url='https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent(query)+'&maxResults=40&printType=books&orderBy='+order+(GB_KEY?'&key='+encodeURIComponent(GB_KEY):'');
+   const res=await fetch(url);if(!res.ok)throw Error('Google Books HTTP '+res.status);const data=await res.json();return data.items||[];
+  }));
+  for(const result of responses){if(result.status==='fulfilled'){googleOk=true;collected.push(...result.value.map(b=>({...b,_source:'Google Books'})));}}
+  // Open Library is a second catalogue, not merely an outage fallback. It can contain
+  // school editions that Google Books does not return for the same wording.
+  const olQueries=queries.slice(0,3);
+  const olResults=await Promise.allSettled(olQueries.map(query=>openLibrary(query,order)));
+  for(const result of olResults){if(result.status==='fulfilled')collected.push(...result.value.map(b=>({...b,_source:'Open Library'})));}
+  if(!googleOk&&!collected.length)throw Error('No catalogue could be reached');
+  if(requestId!==searchSequence)return;
+  const seen=new Set();
+  collected=collected.filter(b=>{const v=b.volumeInfo||{},key=(b._source==='Google Books'?'g:':'o:')+String(b.id||v.infoLink||v.title||'').toLowerCase();if(seen.has(key))return false;seen.add(key);return true;});
+  // Prefer clear qualification matches while retaining other useful catalogue results.
+  collected.sort((a,b)=>rankSchoolBook(b,level)-rankSchoolBook(a,level));
+  source=googleOk?'Google Books + Open Library':'Open Library';items=collected.slice(0,60);render();
+ }catch(e){if(requestId!==searchSequence)return;$('#results').innerHTML='<div class="state">The book catalogues could not be reached. Check your internet connection and try again, or use the specialist collections below.</div>';$('#count').textContent='Connection issue';}
+ finally{if(requestId===searchSequence){$('#go').disabled=false;$('#go').textContent='Search';}}
+}
+$('#searchForm').addEventListener('submit',e=>{e.preventDefault();document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));search($('#query').value)});
+$('#categories').addEventListener('click',e=>{let b=e.target.closest('[data-q]');if(!b)return;document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));b.classList.add('active');search(b.dataset.q)});
+$('#free').addEventListener('change',render);$('#sort').addEventListener('change',()=>{if(lastTerm)search(lastTerm)});$('#level').addEventListener('change',()=>{updateLevelNote();if(lastTerm)search(lastTerm)});updateLevelNote();
+if(CONTACT_EMAIL)$('#rcontact').innerHTML='Report a problem: <a style="color:#9dbaff" href="mailto:'+safe(CONTACT_EMAIL)+'">'+safe(CONTACT_EMAIL)+'</a>';
+$('#results').addEventListener('click',async e=>{let b=e.target.closest('.readbtn');if(!b)return;let bk=shown[+b.dataset.i];if(!bk)return;let old=b.textContent;b.disabled=true;b.textContent='Checking…';let u=null;try{u=await embedUrl(bk);}catch(err){}b.disabled=false;b.textContent=old;if(!u){alert('An openly available copy could not be confirmed for this book, so it is not shown here. Use the “View book” link to see it at its original source.');return;}setMode('frame',null);$('#rtitle').textContent=(bk.volumeInfo||{}).title||'Book';$('#rframe').src=u;$('#reader').hidden=false;document.body.style.overflow='hidden';});
+function closeReader(){$('#reader').hidden=true;$('#rframe').src='about:blank';$('#rbody').textContent='';document.body.style.overflow='';}
+$('#rclose').addEventListener('click',closeReader);
+$('#rminus').addEventListener('click',()=>{fs=Math.max(12,fs-2);$('#rbody').style.fontSize=fs+'px'});$('#rplus').addEventListener('click',()=>{fs=Math.min(32,fs+2);$('#rbody').style.fontSize=fs+'px'});
+$('#library').addEventListener('click',async e=>{let d=e.target.closest('[data-del]');if(d){if(confirm('Remove this book from your device?')){await dbDel(+d.dataset.del);loadLibrary();}return;}
+ let b=e.target.closest('[data-l]');if(!b)return;let bk=lib[+b.dataset.l];if(!bk)return;$('#rtitle').textContent=bk.title;
+ if(bk.local){if(bk.type==='pdf'){let objectUrl=URL.createObjectURL(bk.blob),tab=window.open(objectUrl,'_blank');if(!tab){URL.revokeObjectURL(objectUrl);alert('Your browser blocked the PDF tab. Allow pop-ups for this page and try again.');}else setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);return;}try{$('#rbody').textContent=await bk.blob.text();}catch(err){alert('Could not read this file from your device.');return;}setMode('text',bk);$('#rtext').scrollTop=0;$('#reader').hidden=false;document.body.style.overflow='hidden';return;}
+ if(bk.type==='txt'){try{let r=await fetch('library/'+encodeURIComponent(bk.file));if(!r.ok)throw Error(r.status);$('#rbody').textContent=await r.text();setMode('text',bk);$('#rtext').scrollTop=0;}catch(err){alert('Could not load this book file. Make sure the library folder sits next to this page and the site is opened through a web server.');return;}}
+ else{setMode('frame',bk);$('#rframe').src='library/'+encodeURIComponent(bk.file);}
+ $('#reader').hidden=false;document.body.style.overflow='hidden';});
+$('#addBook').addEventListener('click',()=>$('#bookFile').click());
+$('#bookFile').addEventListener('change',async e=>{let f=e.target.files[0];e.target.value='';if(!f)return;let n=f.name.toLowerCase(),type=n.endsWith('.pdf')?'pdf':n.endsWith('.txt')?'txt':null;if(!type){alert('Please choose a .txt or .pdf file.');return;}
+ let title=prompt('Book title:',f.name.replace(/\.[^.]+$/,''));if(title===null)return;let author=prompt('Author (optional):','')||'Unknown';
+ try{await dbPut({title:title.trim()||f.name,author,type,blob:f,added:Date.now()});await loadLibrary();}catch(err){alert('Could not save this book on your device (storage may be full or blocked).');}});
+loadLibrary().catch(()=>{$('#library').innerHTML='<div class="state">Your device library could not be loaded. Search and the graphing calculator are still available.</div>';});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#reader').hidden)closeReader()});
+</script><script>
+(()=>{
+/*CORE*/
+let deg=false;
+const toR=v=>deg?v*Math.PI/180:v, fromR=v=>deg?v*180/Math.PI:v;
+const FN={sin:v=>Math.sin(toR(v)),cos:v=>Math.cos(toR(v)),tan:v=>Math.tan(toR(v)),asin:v=>fromR(Math.asin(v)),acos:v=>fromR(Math.acos(v)),atan:v=>fromR(Math.atan(v)),sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,sqrt:Math.sqrt,cbrt:Math.cbrt,abs:Math.abs,ln:Math.log,log:Math.log10,exp:Math.exp,floor:Math.floor,ceil:Math.ceil,round:Math.round,sign:Math.sign};
+const NAMES=[...Object.keys(FN),'pi','x','e'].sort((a,b)=>b.length-a.length);
+function tokenize(src){
+ let s=src.replace(/\s+/g,'').replace(/×/g,'*').replace(/÷/g,'/').replace(/[−–]/g,'-').replace(/π/g,'pi').replace(/√/g,'sqrt').replace(/\*\*/g,'^').toLowerCase();
+ s=s.replace(/^(y|f\(x\))=/,'');
+ let t=[],i=0;
+ while(i<s.length){
+  let m,rest=s.slice(i);
+  if(m=/^(\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/.exec(rest)){t.push({k:'n',v:parseFloat(m[0])});i+=m[0].length;}
+  else if(m=/^[a-z]+/.exec(rest)){let w=m[0];while(w){let nm=NAMES.find(n=>w.startsWith(n));if(!nm)throw Error('Unknown name: '+w);t.push({k:'i',v:nm});w=w.slice(nm.length);}i+=m[0].length;}
+  else if('+-*/^()'.includes(rest[0])){t.push({k:'o',v:rest[0]});i++;}
+  else throw Error('Unexpected "'+rest[0]+'"');
+ }
+ return t;
+}
+function compile(src){
+ let t=tokenize(src),p=0;if(!t.length)throw Error('Empty');
+ const isO=v=>t[p]&&t[p].k==='o'&&t[p].v===v;
+ const startsPrimary=()=>{let k=t[p];return !!k&&(k.k==='n'||k.k==='i'||(k.k==='o'&&k.v==='('));};
+ function expr(){let l=term();while(isO('+')||isO('-')){let op=t[p++].v,r=term(),a=l;l=op==='+'?x=>a(x)+r(x):x=>a(x)-r(x);}return l;}
+ function term(){let l=unary();while(true){if(isO('*')||isO('/')){let op=t[p++].v,r=unary(),a=l;l=op==='*'?x=>a(x)*r(x):x=>a(x)/r(x);}else if(startsPrimary()){let r=unary(),a=l;l=x=>a(x)*r(x);}else break;}return l;}
+ function unary(){if(isO('-')){p++;let a=unary();return x=>-a(x);}if(isO('+')){p++;return unary();}return power();}
+ function power(){let b=primary();if(isO('^')){p++;let e=unary();return x=>Math.pow(b(x),e(x));}return b;}
+ function primary(){let k=t[p++];if(!k)throw Error('Expression ends too early');
+  if(k.k==='n'){let v=k.v;return()=>v;}
+  if(k.k==='o'&&k.v==='('){let a=expr();if(!isO(')'))throw Error('Missing )');p++;return a;}
+  if(k.k==='i'){if(k.v==='x')return x=>x;if(k.v==='pi')return()=>Math.PI;if(k.v==='e')return()=>Math.E;
+   let f=FN[k.v],arg;if(isO('(')){p++;arg=expr();if(!isO(')'))throw Error('Missing )');p++;}else arg=unary();
+   return x=>f(arg(x));}
+  throw Error('Unexpected "'+k.v+'"');}
+ let f=expr();if(p<t.length)throw Error('Unexpected "'+t[p].v+'"');
+ return f;
+}
+function roots(g,a,b,N=96){let out=[],dx=(b-a)/N,px=a,py=g(a);
+ for(let i=1;i<=N;i++){let x=a+i*dx,y=g(x);
+  if(isFinite(py)&&isFinite(y)){
+   if(py===0)out.push(px);
+   else if(py*y<0){let lo=px,hi=x,flo=py;for(let k=0;k<70;k++){let m=(lo+hi)/2,fm=g(m);if(!isFinite(fm))break;if(flo*fm<=0)hi=m;else{lo=m;flo=fm;}}
+    let r=(lo+hi)/2,fr=g(r);if(Math.abs(fr)<=1e-7*Math.max(1,Math.abs(py),Math.abs(y)))out.push(r);}
+  }
+  px=x;py=y;}
+ if(py===0)out.push(px);
+ return out.filter((r,i)=>i===0||Math.abs(r-out[i-1])>dx*0.01);}
+function extrema(g,a,b,N=2400){let out=[],dx=(b-a)/N,xs=[],ys=[];
+ for(let i=0;i<=N;i++){let x=a+i*dx;xs.push(x);ys.push(g(x));}
+ for(let i=1;i<N;i++){let y0=ys[i-1],y1=ys[i],y2=ys[i+1];if(!(isFinite(y0)&&isFinite(y1)&&isFinite(y2)))continue;
+  let isMax=y1>y0&&y1>=y2,isMin=y1<y0&&y1<=y2;if(!isMax&&!isMin)continue;
+  let lo=xs[i-1],hi=xs[i+1],s=isMax?-1:1;
+  for(let k=0;k<100;k++){let m1=lo+(hi-lo)/3,m2=hi-(hi-lo)/3;if(s*g(m1)<s*g(m2))hi=m2;else lo=m1;}
+  {let h=dx*1e-4,d=t=>(g(t+h)-g(t-h))/(2*h),bl=xs[i-1],bh=xs[i+1],dl=d(bl),dh=d(bh);
+   if(isFinite(dl)&&isFinite(dh)&&dl*dh<0){for(let k=0;k<80;k++){let m=(bl+bh)/2,dm=d(m);if(!isFinite(dm))break;if(dl*dm<=0)bh=m;else{bl=m;dl=dm;}}lo=bl;hi=bh;}}
+  let x=(lo+hi)/2;{let xr=Math.round(x*1e8)/1e8;if(Math.abs(xr-x)<5e-9)x=xr;}let y=g(x);if(!isFinite(y)||Math.abs(y)>1e6)continue;
+  let l=g(x-dx),r=g(x+dx);if(!(isMax?(y>=l&&y>=r&&(y>l||y>r)):(y<=l&&y<=r&&(y<l||y<r))))continue;
+  out.push({x,y,type:isMax?'max':'min'});}
+ return out.filter((p,i)=>i===0||Math.abs(p.x-out[i-1].x)>dx*2);}
+function fmt(v){if(!isFinite(v))return String(v);if(Math.abs(v)<1e-10)return '0';let a=Math.abs(v);if(a>=1e7||a<1e-4)return v.toExponential(4).replace(/\.?0+e/,'e');return String(parseFloat(v.toPrecision(7)));}
+/*ENDCORE*/
+
+const q=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COLORS=['#4169e1','#e0452b','#1a9b5d','#a259d9','#e08a00','#0e9aa7'];
+const cv=q('#gcv'),ctx=cv.getContext('2d');
+let rows=[],uid=0,lastInput=null,cx=0,cy=0,scale=40,dpr=1,M=null;
+function compileRow(r){r.err='';r.fn=null;if(r.text.trim()){try{r.fn=compile(r.text);}catch(e){r.err=e.message;}}}
+function buildRows(){q('#gRows').innerHTML=rows.map((r,i)=>`<div class="grow"><button type="button" class="gdot${r.on?'':' off'}" data-dot="${r.id}" style="background:${r.color}" title="Show or hide"></button><input data-in="${r.id}" value="${esc(r.text)}" placeholder="${i?'Another function, e.g. x+1':'Type a function, e.g. x^2 or sin(x)'}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Function ${i+1}"><button type="button" class="grm" data-rm="${r.id}" aria-label="Remove function">×</button></div><div class="gerr" id="gerr${r.id}">${esc(r.err)}</div>`).join('');}
+function addRow(text){if(rows.length>=6)return;let r={id:uid++,text:text||'',on:true,color:COLORS.find(c=>!rows.some(x=>x.color===c))||COLORS[0],fn:null,err:''};rows.push(r);compileRow(r);buildRows();draw();}
+function nice(v){if(!Number.isFinite(v)||v<=0)return 1;let p=Math.pow(10,Math.floor(Math.log10(v)));if(!Number.isFinite(p)||p<=0)return 1;let f=v/p;return (f<1.5?1:f<3.5?2:f<7.5?5:10)*p;}
+function safeEval(fn,x){try{let y=fn(x);return Number.isFinite(y)&&Math.abs(y)<1e100?y:NaN;}catch(_){return NaN;}}
+function draw(){
+ const W=cv.clientWidth,H=cv.clientHeight;if(!W||!H||!Number.isFinite(scale)||scale<=0)return;
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+ const X=x=>W/2+(x-cx)*scale,Y=y=>H/2-(y-cy)*scale;
+ const xmin=cx-W/2/scale,xmax=cx+W/2/scale,ymin=cy-H/2/scale,ymax=cy+H/2/scale,step=nice(80/scale);
+ ctx.font='11px system-ui,sans-serif';ctx.lineWidth=1;
+ for(let k=Math.ceil(xmin/step);k<=Math.floor(xmax/step);k++){let x=k*step,px=Math.round(X(x))+.5;ctx.strokeStyle=k===0?'#8a94a8':'#e8ecf4';ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,H);ctx.stroke();}
+ for(let k=Math.ceil(ymin/step);k<=Math.floor(ymax/step);k++){let y=k*step,py=Math.round(Y(y))+.5;ctx.strokeStyle=k===0?'#8a94a8':'#e8ecf4';ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(W,py);ctx.stroke();}
+ ctx.fillStyle='#68748c';
+ let ay=Math.min(Math.max(Y(0)+13,12),H-4),ax=Math.min(Math.max(X(0)-5,24),W-4);
+ ctx.textAlign='center';for(let k=Math.ceil(xmin/step);k<=Math.floor(xmax/step);k++){if(k===0)continue;ctx.fillText(fmt(k*step),X(k*step),ay);}
+ ctx.textAlign='right';for(let k=Math.ceil(ymin/step);k<=Math.floor(ymax/step);k++){if(k===0)continue;ctx.fillText(fmt(k*step),ax,Y(k*step)+4);}
+ ctx.lineJoin='round';
+ // Clip every curve to the plotting area. Non-finite or wildly off-screen values
+ // are treated as gaps, so huge powers/asymptotes cannot poison the canvas path.
+ ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();
+ rows.forEach(r=>{if(!r.fn||!r.on)return;ctx.strokeStyle=r.color;ctx.lineWidth=2.4;ctx.beginPath();let prev=null;
+  for(let px=0;px<=W;px+=1){let x=cx+(px-W/2)/scale,y=safeEval(r.fn,x);if(!Number.isFinite(x)||!Number.isFinite(y)){prev=null;continue;}let py=H/2-(y-cy)*scale;
+   if(!Number.isFinite(py)||Math.abs(py)>H*4){prev=null;continue;}
+   if(prev===null||Math.abs(py-prev)>H*1.5)ctx.moveTo(px,py);else ctx.lineTo(px,py);prev=py;}
+  ctx.stroke();});ctx.restore();
+ if(M){let px=X(M.x),py=Y(M.y);ctx.setLineDash([4,4]);ctx.strokeStyle='#8a94a8';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,Y(0));ctx.moveTo(px,py);ctx.lineTo(X(0),py);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#fff';ctx.strokeStyle=M.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(px,py,6,0,7);ctx.fill();ctx.stroke();
+  let t='('+fmt(M.x)+', '+fmt(M.y)+')';ctx.font='bold 12px system-ui,sans-serif';let w=ctx.measureText(t).width+14,bx=Math.min(Math.max(px+10,4),W-w-4),by=Math.min(Math.max(py-30,4),H-26);
+  ctx.fillStyle='#17213b';ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,w,22,6):ctx.rect(bx,by,w,22);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='left';ctx.fillText(t,bx+7,by+15);}
+}
+function resize(){dpr=window.devicePixelRatio||1;let r=cv.getBoundingClientRect();cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);draw();}
+function readout(t){q('#gRead').textContent=t;}
+function zoomAt(px,py,f){let W=cv.clientWidth,H=cv.clientHeight,ns=Math.min(Math.max(scale*f,0.01),1e7),wx=cx+(px-W/2)/scale,wy=cy-(py-H/2)/scale;scale=ns;cx=wx-(px-W/2)/scale;cy=wy+(py-H/2)/scale;}
+function tapAt(px,py){let W=cv.clientWidth,H=cv.clientHeight,wx=cx+(px-W/2)/scale,wy=cy-(py-H/2)/scale,best=null;hoverAt(px,py);if(M&&q('#gHover').textContent.includes(': (')){readout(q('#gHover').textContent);draw();return;}
+ rows.forEach((r,i)=>{if(!r.fn||!r.on)return;let y=safeEval(r.fn,wx);if(!Number.isFinite(y))return;let d=Math.abs(H/2-(y-cy)*scale-py);if(d<18&&(!best||d<best.d))best={d,i,y,color:r.color};});
+ if(best){M={x:wx,y:best.y,color:best.color};readout('On f'+(best.i+1)+': ('+fmt(wx)+', '+fmt(best.y)+')   ·   tapped at ('+fmt(wx)+', '+fmt(wy)+')');}
+ else{M={x:wx,y:wy,color:'#17213b'};readout('Point: ('+fmt(wx)+', '+fmt(wy)+')');}
+ draw();}
+function setPoint(x,y,color,label){M={x,y,color};readout(label+': ('+fmt(x)+', '+fmt(y)+')');draw();}
+// pointer handling
+const ptrs=new Map();let down=null;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);let r=cv.getBoundingClientRect(),p={x:e.clientX-r.left,y:e.clientY-r.top};ptrs.set(e.pointerId,p);if(ptrs.size===1)down={x:p.x,y:p.y,t:Date.now(),moved:false};else if(down)down.moved=true;});
+cv.addEventListener('pointermove',e=>{let r=cv.getBoundingClientRect(),p={x:e.clientX-r.left,y:e.clientY-r.top};
+ if(!ptrs.has(e.pointerId)){if(e.pointerType==='mouse')hoverAt(p.x,p.y);return;}
+ let old=ptrs.get(e.pointerId);
+ if(ptrs.size===1){if(down&&Math.hypot(p.x-down.x,p.y-down.y)>6)down.moved=true;if(down&&down.moved){cx-=(p.x-old.x)/scale;cy+=(p.y-old.y)/scale;draw();}ptrs.set(e.pointerId,p);}
+ else if(ptrs.size===2){let other=[...ptrs.entries()].find(([id])=>id!==e.pointerId)[1],d0=Math.hypot(old.x-other.x,old.y-other.y),d1=Math.hypot(p.x-other.x,p.y-other.y);if(d0>0)zoomAt((p.x+other.x)/2,(p.y+other.y)/2,d1/d0);ptrs.set(e.pointerId,p);if(down)down.moved=true;draw();}});
+function endPtr(e){let r=cv.getBoundingClientRect(),p={x:e.clientX-r.left,y:e.clientY-r.top},wasOne=ptrs.size===1;ptrs.delete(e.pointerId);
+ if(e.type==='pointerup'&&wasOne&&down&&!down.moved&&Date.now()-down.t<600)tapAt(p.x,p.y);if(!ptrs.size)down=null;}
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
+cv.addEventListener('wheel',e=>{e.preventDefault();let r=cv.getBoundingClientRect();zoomAt(e.clientX-r.left,e.clientY-r.top,e.deltaY<0?1.15:1/1.15);draw();},{passive:false});
+// controls
+q('#gRows').addEventListener('input',e=>{let id=e.target.dataset.in;if(id===undefined)return;let r=rows.find(x=>x.id==id);r.text=e.target.value;compileRow(r);q('#gerr'+r.id).textContent=r.err;draw();});
+q('#gRows').addEventListener('focusin',e=>{if(e.target.dataset.in!==undefined)lastInput=e.target;});
+q('#gRows').addEventListener('click',e=>{let d=e.target.closest('[data-dot]'),m=e.target.closest('[data-rm]');
+ if(d){let r=rows.find(x=>x.id==d.dataset.dot);r.on=!r.on;buildRows();draw();}
+ else if(m){if(rows.length===1){rows[0].text='';compileRow(rows[0]);}else rows=rows.filter(x=>x.id!=m.dataset.rm);buildRows();draw();}});
+const KEYS=['x','y=','f(x)=','^','(',')','+','-','*','/','π','e','√(','sin(','cos(','tan(','ln(','abs('];
+q('#gKeys').innerHTML=KEYS.map(k=>`<button type="button" data-k="${esc(k)}">${esc(k==='*'?'×':k==='/'?'÷':k)}</button>`).join('');
+q('#gKeys').addEventListener('click',e=>{let b=e.target.closest('[data-k]');if(!b)return;let i=lastInput&&document.body.contains(lastInput)?lastInput:q('#gRows input');if(!i)return;let s=i.selectionStart??i.value.length,en=i.selectionEnd??s,t=b.dataset.k;i.value=i.value.slice(0,s)+t+i.value.slice(en);i.focus();i.setSelectionRange(s+t.length,s+t.length);i.dispatchEvent(new Event('input',{bubbles:true}));});
+q('#gAdd').addEventListener('click',()=>{if(rows.length>=6){readout('You can plot up to six functions at once.');return;}addRow('');let ins=document.querySelectorAll('#gRows input');if(ins.length)ins[ins.length-1].focus();});
+q('#gZin').addEventListener('click',()=>{zoomAt(cv.clientWidth/2,cv.clientHeight/2,1.5);draw();});
+q('#gZout').addEventListener('click',()=>{zoomAt(cv.clientWidth/2,cv.clientHeight/2,1/1.5);draw();});
+q('#gReset').addEventListener('click',()=>{cx=0;cy=0;scale=40;M=null;readout('Move your pointer near a curve or notable point; tap the graph on a touchscreen to read coordinates.');q('#gHover').textContent='Move your pointer near a curve or notable point; tap the graph on a touchscreen to read coordinates.';draw();});
+q('#gDeg').addEventListener('click',e=>{deg=!deg;e.target.textContent=deg?'Degrees':'Radians';draw();});
+q('#gEvalBtn').addEventListener('click',()=>{let v=parseFloat(q('#gX').value);if(!isFinite(v)){q('#gEval').textContent='Enter a number for x.';return;}
+ let out=[],first=null;rows.forEach((r,i)=>{if(!r.fn||!r.on)return;let y=safeEval(r.fn,v);out.push('f'+(i+1)+'('+fmt(v)+') = '+(isFinite(y)?fmt(y):'undefined'));if(first===null&&isFinite(y))first={y,color:r.color};});
+ q('#gEval').textContent=out.length?out.join('   ·   '):'Add a function first.';if(first)setPoint(v,first.y,first.color,'Point');});
+// Find notable points automatically as the pointer approaches the graph.
+function hoverAt(px,py){
+ const W=cv.clientWidth,H=cv.clientHeight,wx=cx+(px-W/2)/scale,wy=cy-(py-H/2)/scale;
+ let best=null;
+ const consider=(x,y,color,label)=>{if(!isFinite(x)||!isFinite(y))return;let sx=W/2+(x-cx)*scale,sy=H/2-(y-cy)*scale,d=Math.hypot(sx-px,sy-py);if(d<15&&(!best||d<best.d))best={x,y,color,label,d};};
+ // The origin is always a useful reference point.
+ consider(0,0,'#17213b','Origin');
+ rows.forEach((r,i)=>{if(!r.fn||!r.on)return;let f=r.fn,n='f'+(i+1);
+  // Snap when either coordinate is near an integer; the other coordinate
+  // can be any value. This makes points such as (2, 3.7) and (1.42, 4) discoverable.
+  let ix=Math.round(wx),yAtIntegerX=safeEval(f,ix);
+  if(Math.abs(ix-wx)*scale<13&&isFinite(yAtIntegerX))consider(ix,yAtIntegerX,r.color,n+' integer x');
+  // Find where the curve crosses the nearest integer y-level, even when x is not integer.
+  let iy=Math.round(wy),span=22/scale;
+  if(Math.abs(iy-wy)*scale<13){
+   let levelRoots=roots(x=>f(x)-iy,wx-span,wx+span);
+   levelRoots.forEach(x=>consider(x,iy,r.color,n+' integer y'));
+  }
+  // Snap to a y-intercept when the pointer is nearby.
+  if(Math.abs(wx)*scale<14){let y=safeEval(f,0);if(Number.isFinite(y))consider(0,y,r.color,n+' y-intercept');}
+  // Search locally for a nearby x-intercept (root).
+  let rootSpan=22/scale,localRoots=roots(f,wx-rootSpan,wx+rootSpan);localRoots.forEach(x=>consider(x,0,r.color,n+' x-intercept'));
+ });
+ if(best){M={x:best.x,y:best.y,color:best.color};q('#gHover').textContent=best.label+': ('+fmt(best.x)+', '+fmt(best.y)+')';draw();}
+ else{M=null;q('#gHover').textContent='Cursor: ('+fmt(wx)+', '+fmt(wy)+')';draw();}
+}
+if('ResizeObserver' in window)new ResizeObserver(resize).observe(cv);else window.addEventListener('resize',resize);
+addRow('x^2');resize();
+
+})();
+</script>
+</body></html>
